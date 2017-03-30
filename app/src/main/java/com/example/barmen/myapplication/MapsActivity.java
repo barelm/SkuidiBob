@@ -18,6 +18,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -119,7 +120,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         };
 
-        timer.schedule(task, 0, 5000);  // interval of 5 seconds
+        timer.schedule(task, 0, 1000*60);  // run every minute
     }
 
     public void placeCoordsOnMap(JSONArray arrMeasurements){
@@ -143,28 +144,88 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         {
             // Getting the measurement json object
             JSONObject currMeas = null;
+
             try {
                 currMeas = arrMeasurements.getJSONObject(i);
 
-                // Getting X and Y coordinates
+                // Getting measurement data
                 double x_coord = Double.parseDouble(currMeas.getString("x_coordinate"));
                 double y_coord = Double.parseDouble(currMeas.getString("y_coordinate"));
+
+                // Build the marker title
+                String markerTitle = "Measurement Details";
+
+                // Set snippet according to rain strength
+                String snippet = "";
+
+                // Holds the marker icon to place on the map
+                BitmapDescriptor markerIcon = null;
+
+                String dateTime = currMeas.getString("datetime");
+                if(dateTime != "null") {
+//                    markerTitle = markerTitle + "Date: " + dateTime + '\n';
+                }
+
+                String rainPower = currMeas.getString("rain_power");
+                if(rainPower != "null") {
+
+                    // Set marker icon according to the rain power
+                    if( rainPower == "1" ) {
+//                        markerTitle = markerTitle + "Rain Strength: Low" + "\n";
+                        snippet = "Rain Strength: Low";
+                        markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.weak_rain);
+                    }
+                    else if( rainPower == "2" ) {
+//                        markerTitle = markerTitle + "Rain Strength: High" + "\n";
+                        snippet = "Rain Strength: High";
+                        markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.strong_rain);
+                    }
+                }
+
+                // If the icon is still initial, give it sunny value
+                if(markerIcon == null)
+                {
+                    markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.sunny);
+                }
+
+                String temperature = currMeas.getString("temperature");
+                if(temperature != "null") {
+
+                    // Convert to numeric value
+                    int numericTemperature = (int)Double.parseDouble(temperature);
+//                    markerTitle = markerTitle + "Temperature: " + numericTemperature + "\n";
+                }
+
+                String humidity = currMeas.getString("humidity");
+                if(humidity != "null") {
+//                    markerTitle = markerTitle + "Humidity: " + humidity + "\n";
+                }
+
+                String sea_level = currMeas.getString("sea_level");
+                if(sea_level != "null") {
+//                    markerTitle = markerTitle + "Sea Level: " + sea_level + "\n";
+                }
+
+                String air_pollution = currMeas.getString("air_pollution");
+                if(air_pollution != "null") {
+//                    markerTitle = markerTitle + "Air Pollution: " + air_pollution + "\n";
+                }
 
                 // Create coordinate object
                 LatLng collegeMgmtCoords = new LatLng(y_coord, x_coord);
 
                 // Add a marker in the coordinates
-                locationMarker = mMap.addMarker(new MarkerOptions().position(collegeMgmtCoords).title("It's raining men, hallelujah")
-                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.rain)));
+                locationMarker = mMap.addMarker(new MarkerOptions().position(collegeMgmtCoords).title(markerTitle)
+                        .icon(markerIcon).snippet(snippet));
 
-                // Move the Camera to the location of the marker
-                mMap.moveCamera(CameraUpdateFactory.newLatLng(collegeMgmtCoords));
-
-                // Zoom in the Camera
-                mMap.moveCamera(CameraUpdateFactory.zoomTo(16));
-
-                // Show the information window
-                locationMarker.showInfoWindow();
+//                // Move the Camera to the location of the marker
+//                mMap.moveCamera(CameraUpdateFactory.newLatLng(collegeMgmtCoords));
+//
+//                // Zoom in the Camera
+//                mMap.moveCamera(CameraUpdateFactory.zoomTo(16));
+//
+//                // Show the information window
+//                locationMarker.showInfoWindow();
 
             } catch (JSONException e) {
                 e.printStackTrace();
