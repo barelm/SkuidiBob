@@ -8,6 +8,7 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
@@ -28,6 +29,8 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -44,7 +47,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
     }
 
-    private class ProcessJSON extends AsyncTask<String, Void, String> {
+    private class ReadServerData extends AsyncTask<String, Void, String> {
         protected String doInBackground(String... strings){
             String stream = null;
             String urlString = strings[0];
@@ -57,14 +60,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
         protected void onPostExecute(String stream){
-            /*
-                Important in JSON DATA
-                -------------------------
-                * Square bracket ([) represents a JSON array
-                * Curly bracket ({) represents a JSON object
-                * JSON object contains key/value pairs
-                * Each key is a String and value may be different data types
-             */
 
             //..........Process JSON DATA................
             if(stream !=null){
@@ -99,7 +94,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
 
         // Execute async task to read measurements data from the server
-        new ProcessJSON().execute(urlString);
+        // This will happen every 5 seconds
+        setRepeatingServerReadTask();
+    }
+
+    public void setRepeatingServerReadTask() {
+
+        final Handler handler = new Handler();
+        Timer timer = new Timer();
+
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                handler.post(new Runnable() {
+                    public void run() {
+                        try {
+                            // Execute async task to read measurements data from the server
+                            new ReadServerData().execute(urlString);
+                        } catch (Exception e) {
+                            // error, do something
+                        }
+                    }
+                });
+            }
+        };
+
+        timer.schedule(task, 0, 5000);  // interval of 5 seconds
     }
 
     public void placeCoordsOnMap(JSONArray arrMeasurements){
