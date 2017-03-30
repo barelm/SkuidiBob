@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
@@ -21,11 +22,16 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.io.InputStream;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
+    private static final String urlString = "http://193.106.55.45:5000/measurements";
     private GoogleMap mMap;
 
     @Override
@@ -38,6 +44,45 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
     }
 
+    private class ProcessJSON extends AsyncTask<String, Void, String> {
+        protected String doInBackground(String... strings){
+            String stream = null;
+            String urlString = strings[0];
+
+            HTTPDataHandler hh = new HTTPDataHandler();
+            stream = hh.GetHTTPData(urlString);
+
+            // Return the data from specified url
+            return stream;
+        }
+
+        protected void onPostExecute(String stream){
+            /*
+                Important in JSON DATA
+                -------------------------
+                * Square bracket ([) represents a JSON array
+                * Curly bracket ({) represents a JSON object
+                * JSON object contains key/value pairs
+                * Each key is a String and value may be different data types
+             */
+
+            //..........Process JSON DATA................
+            if(stream !=null){
+                try{
+                    // Get the full HTTP Data as JSONObject
+                    JSONObject reader= new JSONObject(stream);
+
+                    // Get jsonArrray of the measurements
+                    placeCoordsOnMap(reader.getJSONArray("Measurements"));
+
+                }catch(JSONException e){
+                    e.printStackTrace();
+                }
+
+            } // if statement end
+        } // onPostExecute() end
+    } // ProcessJSON class end
+
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -49,9 +94,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-        Marker locationMarker;
 
+        // Save the map object
+        mMap = googleMap;
+
+        // Execute async task to read measurements data from the server
+        new ProcessJSON().execute(urlString);
+    }
+
+    public void placeCoordsOnMap(JSONArray arrMeasurements){
+        Marker locationMarker;
 
         // Notification code - start
         NotificationCompat.Builder mBuilder =
@@ -59,45 +111,44 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         .setSmallIcon(R.drawable.rain)
                         .setContentTitle("My notification")
                         .setContentText("Hello World!");
-// Creates an explicit intent for an Activity in your app
-//        Intent resultIntent = new Intent(this, ResultActivity.class);
-//
-//// The stack builder object will contain an artificial back stack for the
-//// started Activity.
-//// This ensures that navigating backward from the Activity leads out of
-//// your application to the Home screen.
-//        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-//// Adds the back stack for the Intent (but not the Intent itself)
-//        stackBuilder.addParentStack(ResultActivity.class);
-//// Adds the Intent that starts the Activity to the top of the stack
-//        stackBuilder.addNextIntent(resultIntent);
-//        PendingIntent resultPendingIntent =
-//                stackBuilder.getPendingIntent(
-//                        0,
-//                        PendingIntent.FLAG_UPDATE_CURRENT
-//                );
-//        mBuilder.setContentIntent(resultPendingIntent);
+
         NotificationManager mNotificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-// mId allows you to update the notification later on.
-        mNotificationManager.notify(1, mBuilder.build());
 
+        mNotificationManager.notify(1, mBuilder.build());
         // Notification code - End
 
-        // Get the college of management's coordinates
-        LatLng collegeMgmtCoords = new LatLng(31.969956, 34.772723);
+        // Go through every measurement and add an appropriate marker
+        for(int i = 0; i < arrMeasurements.length(); i++)
+        {
+            // Getting the measurement json object
+            JSONObject currMeas = null;
+            try {
+                currMeas = arrMeasurements.getJSONObject(i);
 
-        // Add a marker in the College of Management
-        locationMarker = mMap.addMarker(new MarkerOptions().position(collegeMgmtCoords).title("Rain in the College of Management")
-                                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.rain)));
+                // Getting X and Y coordinates
+                double x_coord = Double.parseDouble(currMeas.getString("x_coordinate"));
+                double y_coord = Double.parseDouble(currMeas.getString("y_coordinate"));
 
-        // Move the Camera to the location of the marker
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(collegeMgmtCoords));
+                // Create coordinate object
+                LatLng collegeMgmtCoords = new LatLng(y_coord, x_coord);
 
-        // Zoom in the Camera
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(16));
+                // Add a marker in the coordinates
+                locationMarker = mMap.addMarker(new MarkerOptions().position(collegeMgmtCoords).title("It's raining men, hallelujah")
+                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.rain)));
 
-        // Show the information window
-        locationMarker.showInfoWindow();
+                // Move the Camera to the location of the marker
+                mMap.moveCamera(CameraUpdateFactory.newLatLng(collegeMgmtCoords));
+
+                // Zoom in the Camera
+                mMap.moveCamera(CameraUpdateFactory.zoomTo(16));
+
+                // Show the information window
+                locationMarker.showInfoWindow();
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
