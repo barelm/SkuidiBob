@@ -104,6 +104,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         final Handler handler = new Handler();
         Timer timer = new Timer();
 
+        // timer task
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
