@@ -1,7 +1,9 @@
 package com.example.barmen.myapplication;
 
+import android.app.AlarmManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
@@ -72,6 +74,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     .build();
         }
 
+        //Alarm alarm = new Alarm();
+        //alarm.setAlarm(this);
     }
 
     protected void onStart() {
@@ -166,10 +170,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void addHideMarkers(boolean showNotif)
     {
+        boolean dispNotif = false;
+
         if(this.mMap != null)
         {
-            boolean dispNotif = false;
-
             //This is the current user-viewable region of the map
             LatLngBounds bounds = this.mMap.getProjection().getVisibleRegion().latLngBounds;
 
@@ -187,23 +191,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     double x_coord = Double.parseDouble(currMeas.getString("x_coordinate"));
                     double y_coord = Double.parseDouble(currMeas.getString("y_coordinate"));
 
-                    // Only if we need to show notification
-                    if ((showNotif) && (!dispNotif) && (this.CheckDist(mUserLoc, x_coord, y_coord)))
-                    {
-                        NotificationCompat.Builder mBuilder =
-                                new NotificationCompat.Builder(this)
-                                        .setSmallIcon(R.drawable.rain)
-                                        .setContentTitle("Rain around you")
-                                        .setContentText("muhahahahahahaha");
-
-                        NotificationManager mNotificationManager =
-                                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-                        mNotificationManager.notify(1, mBuilder.build());
-
-                        dispNotif = true;
-                    }
-
                     //If the item is within the the bounds of the screen
                     if(bounds.contains(new LatLng(y_coord, x_coord)))
                     {
@@ -213,6 +200,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             //Add the Marker to the Map and keep track of it with the HashMap
                             //getMarkerForItem just returns a MarkerOptions object
                             this.visibleMarkers.put(measID, this.mMap.addMarker(getMarkerForMeasurement(currMeas)));
+
+                            // Only if we need to show notification
+                            if ((showNotif) && (!dispNotif) && (this.CheckDist(mUserLoc, x_coord, y_coord)))
+                            {
+                                NotificationCompat.Builder mBuilder =
+                                        new NotificationCompat.Builder(this)
+                                                .setSmallIcon(R.drawable.rain)
+                                                .setContentTitle("Rain around you")
+                                                .setContentText("muhahahahahahaha");
+
+                                NotificationManager mNotificationManager =
+                                        (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+                                mNotificationManager.notify(1, mBuilder.build());
+
+                                dispNotif = true;
+                            }
                         }
                     }
 
@@ -282,31 +286,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             String dateTime = objMeasurement.getString("datetime");
             if(dateTime != "null") {
-//                    markerTitle = markerTitle + "Date: " + dateTime + '\n';
+//             markerTitle = markerTitle + "Date: " + dateTime + '\n';
             }
 
-            String rainPower = objMeasurement.getString("rain_power");
-            if(rainPower != "null") {
+            if (!objMeasurement.isNull("rain_power")) {
+                int rainPower = objMeasurement.getInt("rain_power");
 
                 // Set marker icon according to the rain power
-                if( rainPower == "1" ) {
+                if (rainPower == 1) {
 //                        markerTitle = markerTitle + "Rain Strength: Low" + "\n";
                     snippet = "Rain Strength: Low";
                     markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.weak_rain);
-                }
-                else if( rainPower == "2" ) {
+                } else if (rainPower == 2) {
 //                        markerTitle = markerTitle + "Rain Strength: High" + "\n";
                     snippet = "Rain Strength: High";
                     markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.strong_rain);
+                } else {
+                    markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.sunny);
+
                 }
+            } else {
+               // markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.sunny);
             }
 
-            // If the icon is still initial, give it sunny value
-            if(markerIcon == null)
-            {
-                markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.sunny);
-            }
-
+//                // If the icon is still initial, give it sunny value
+//                if (markerIcon == null) {
+//                    markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.sunny);
+//                }
             String temperature = objMeasurement.getString("temperature");
             if(temperature != "null") {
 
@@ -344,13 +350,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return null;
     }
 
-    public boolean CheckDist(Location currLoc, double XDest, double YDest) {
+    private boolean CheckDist(Location currLoc, double XDest, double YDest) {
         if (currLoc == null)
             return false;
 
         Location targetLocation = new Location("");
-        targetLocation.setLatitude(XDest);
-        targetLocation.setLongitude(YDest);
+        targetLocation.setLatitude(YDest);
+        targetLocation.setLongitude(XDest);
 
         float dist = currLoc.distanceTo(targetLocation);
 
@@ -359,4 +365,42 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         else
             return false;
     }
+
+//    private void RaiseNotif() {
+//        NotificationCompat.Builder mBuilder =
+//                new NotificationCompat.Builder(this)
+//                        .setSmallIcon(R.drawable.rain)
+//                        .setContentTitle("Rain around you")
+//                        .setContentText("muhahahahahahaha");
+//
+//        NotificationManager mNotificationManager =
+//                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+//        mNotificationManager.notify(1, mBuilder.build());
+//    }
+
+//    private class Alarm extends BroadcastReceiver
+//    {
+//        @Override
+//        public void onReceive(Context context, Intent intent)
+//        {
+//            RaiseNotif();
+//        }
+//
+//        public void setAlarm(Context context)
+//        {
+//            AlarmManager am =( AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+//            Intent i = new Intent(context, Alarm.class);
+//            PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
+//            am.setRepeating(AlarmManager.RTC, System.currentTimeMillis(), 1000 * 5, pi); // Millisec * Second * Minute
+//        }
+//
+//        public void cancelAlarm(Context context)
+//        {
+//            Intent intent = new Intent(context, Alarm.class);
+//            PendingIntent sender = PendingIntent.getBroadcast(context, 0, intent, 0);
+//            AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+//            alarmManager.cancel(sender);
+//        }
+//    }
 }
