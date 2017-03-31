@@ -54,6 +54,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private JSONArray arrMeasurements = null;
 
+    private int tmpPrevRainStrength = 0;
+
     private HashMap<Integer, Marker> visibleMarkers = new HashMap<Integer, Marker>();
 
     @Override
@@ -182,58 +184,72 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             {
                 JSONObject currMeas = null;
                 try {
+
                     currMeas = arrMeasurements.getJSONObject(i);
 
                     // Get the measurement id
                     int measID = Integer.parseInt(currMeas.getString("id"));
 
-                    // Getting measurement data
-                    double x_coord = Double.parseDouble(currMeas.getString("x_coordinate"));
-                    double y_coord = Double.parseDouble(currMeas.getString("y_coordinate"));
-
-                    //If the item is within the the bounds of the screen
-                    if(bounds.contains(new LatLng(y_coord, x_coord)))
+                    // Taking only the last measurement
+                    if( i == (arrMeasurements.length() - 1) || measID == 428 || measID == 429)
                     {
-                        //If the item isn't already being displayed
-                        if(!visibleMarkers.containsKey(measID))
+                        int rainPower = currMeas.getInt("rain_power");
+
+                        // If we received different rain strength, remove previous markers
+                        if( rainPower != tmpPrevRainStrength && measID != 428 && measID != 429)
                         {
-                            //Add the Marker to the Map and keep track of it with the HashMap
-                            //getMarkerForItem just returns a MarkerOptions object
-                            this.visibleMarkers.put(measID, this.mMap.addMarker(getMarkerForMeasurement(currMeas)));
+                            mMap.clear();
+                            visibleMarkers.clear();
+                            tmpPrevRainStrength = rainPower;
+                        }
 
-                            // Only if we need to show notification
-                            if ((showNotif) && (!dispNotif) && (this.CheckDist(mUserLoc, x_coord, y_coord)))
+                        // Getting measurement data
+                        double x_coord = Double.parseDouble(currMeas.getString("x_coordinate"));
+                        double y_coord = Double.parseDouble(currMeas.getString("y_coordinate"));
+
+                        //If the item is within the the bounds of the screen
+                        if(bounds.contains(new LatLng(y_coord, x_coord)))
+                        {
+                            //If the item isn't already being displayed
+                            if(!visibleMarkers.containsKey(measID))
                             {
-                                NotificationCompat.Builder mBuilder =
-                                        new NotificationCompat.Builder(this)
-                                                .setSmallIcon(R.drawable.rain)
-                                                .setContentTitle("Rain around you")
-                                                .setContentText("muhahahahahahaha");
+                                //Add the Marker to the Map and keep track of it with the HashMap
+                                //getMarkerForItem just returns a MarkerOptions object
+                                this.visibleMarkers.put(measID, this.mMap.addMarker(getMarkerForMeasurement(currMeas)));
 
-                                NotificationManager mNotificationManager =
-                                        (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                                // Only if we need to show notification
+                                if ((showNotif) && (!dispNotif) && (this.CheckDist(mUserLoc, x_coord, y_coord)))
+                                {
+                                    NotificationCompat.Builder mBuilder =
+                                            new NotificationCompat.Builder(this)
+                                                    .setSmallIcon(R.drawable.rain)
+                                                    .setContentTitle("Rain around you")
+                                                    .setContentText("muhahahahahahaha");
 
-                                mNotificationManager.notify(1, mBuilder.build());
+                                    NotificationManager mNotificationManager =
+                                            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-                                dispNotif = true;
+                                    mNotificationManager.notify(1, mBuilder.build());
+
+                                    dispNotif = true;
+                                }
+                            }
+                        }
+
+                        //If the marker is off screen
+                        else
+                        {
+                            //If the course was previously on screen
+                            if(visibleMarkers.containsKey(measID))
+                            {
+                                //1. Remove the Marker from the GoogleMap
+                                visibleMarkers.get(measID).remove();
+
+                                //2. Remove the reference to the Marker from the HashMap
+                                visibleMarkers.remove(measID);
                             }
                         }
                     }
-
-                    //If the marker is off screen
-                    else
-                    {
-                        //If the course was previously on screen
-                        if(visibleMarkers.containsKey(measID))
-                        {
-                            //1. Remove the Marker from the GoogleMap
-                            visibleMarkers.get(measID).remove();
-
-                            //2. Remove the reference to the Marker from the HashMap
-                            visibleMarkers.remove(measID);
-                        }
-                    }
-
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -302,6 +318,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     snippet = "Rain Strength: High";
                     markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.strong_rain);
                 } else {
+                    snippet = "No Rain Detected";
                     markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.sunny);
                 }
             } else {
