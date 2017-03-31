@@ -25,7 +25,9 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -35,6 +37,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -46,6 +49,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Location mUserLoc;
     private float mDistanceNotif = 1000;
     private GoogleApiClient mGoogleApiClient;
+
+    private JSONArray arrMeasurements = null;
+
+    private HashMap<Integer, Marker> visibleMarkers = new HashMap<Integer, Marker>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,7 +97,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(mUserLoc.getLatitude(),
                     mUserLoc.getLongitude())));
 
+            mMap.setMyLocationEnabled(true);
 
+            new ReadServerData().execute(urlString);
         }
 
     }
@@ -126,7 +135,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     JSONObject reader= new JSONObject(stream);
 
                     // Get jsonArrray of the measurements
-                    placeCoordsOnMap(reader.getJSONArray("Measurements"));
+                    arrMeasurements = reader.getJSONArray("Measurements");
+
+                    // Add/Hide the markers on the map
+                    addHideMarkers(true);
 
                 }catch(JSONException e){
                     e.printStackTrace();
@@ -150,150 +162,186 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // Save the map object
         mMap = googleMap;
-
-        // Execute async task to read measurements data from the server
-        // This will happen every 5 seconds
-        setRepeatingServerReadTask();
     }
 
-    public void setRepeatingServerReadTask() {
+    private void addHideMarkers(boolean showNotif)
+    {
+        if(this.mMap != null)
+        {
+            boolean dispNotif = false;
 
-        final Handler handler = new Handler();
-        Timer timer = new Timer();
+            //This is the current user-viewable region of the map
+            LatLngBounds bounds = this.mMap.getProjection().getVisibleRegion().latLngBounds;
 
-        // timer task
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                handler.post(new Runnable() {
-                    public void run() {
-                        try {
-                            // Execute async task to read measurements data from the server
-                            new ReadServerData().execute(urlString);
-                        } catch (Exception e) {
-                            // error, do something
+            //Loop through all the items that are available to be placed on the map
+            for(int i = 0; i < arrMeasurements.length(); i++)
+            {
+                JSONObject currMeas = null;
+                try {
+                    currMeas = arrMeasurements.getJSONObject(i);
+
+                    // Get the measurement id
+                    int measID = Integer.parseInt(currMeas.getString("id"));
+
+                    // Getting measurement data
+                    double x_coord = Double.parseDouble(currMeas.getString("x_coordinate"));
+                    double y_coord = Double.parseDouble(currMeas.getString("y_coordinate"));
+
+                    // Only if we need to show notification
+                    if ((showNotif) && (!dispNotif) && (this.CheckDist(mUserLoc, x_coord, y_coord)))
+                    {
+                        NotificationCompat.Builder mBuilder =
+                                new NotificationCompat.Builder(this)
+                                        .setSmallIcon(R.drawable.rain)
+                                        .setContentTitle("Rain around you")
+                                        .setContentText("muhahahahahahaha");
+
+                        NotificationManager mNotificationManager =
+                                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+                        mNotificationManager.notify(1, mBuilder.build());
+
+                        dispNotif = true;
+                    }
+
+                    //If the item is within the the bounds of the screen
+                    if(bounds.contains(new LatLng(y_coord, x_coord)))
+                    {
+                        //If the item isn't already being displayed
+                        if(!visibleMarkers.containsKey(measID))
+                        {
+                            //Add the Marker to the Map and keep track of it with the HashMap
+                            //getMarkerForItem just returns a MarkerOptions object
+                            this.visibleMarkers.put(measID, this.mMap.addMarker(getMarkerForMeasurement(currMeas)));
                         }
                     }
-                });
-            }
-        };
 
-        timer.schedule(task, 0, 1000*60);  // run every minute
+                    //If the marker is off screen
+                    else
+                    {
+                        //If the course was previously on screen
+                        if(visibleMarkers.containsKey(measID))
+                        {
+                            //1. Remove the Marker from the GoogleMap
+                            visibleMarkers.get(measID).remove();
+
+                            //2. Remove the reference to the Marker from the HashMap
+                            visibleMarkers.remove(measID);
+                        }
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            // Execute the thread again because we want realtime data
+            new ReadServerData().execute(urlString);
+        }
     }
 
-    public void placeCoordsOnMap(JSONArray arrMeasurements){
-        Marker locationMarker;
-        boolean IsNotif = false;
+//    public void setRepeatingServerReadTask() {
+//
+//        final Handler handler = new Handler();
+//        Timer timer = new Timer();
+//
+//        // timer task
+//        TimerTask task = new TimerTask() {
+//            @Override
+//            public void run() {
+//                handler.post(new Runnable() {
+//                    public void run() {
+//                        try {
+//                            // Execute async task to read measurements data from the server
+//                            new ReadServerData().execute(urlString);
+//                        } catch (Exception e) {
+//                            // error, do something
+//                        }
+//                    }
+//                });
+//            }
+//        };
+//
+//        timer.schedule(task, 0, 5000);  // run every minute
+//    }
 
-        // Go through every measurement and add an appropriate marker
-        for(int i = 0; i < arrMeasurements.length(); i++)
-        {
-            // Getting the measurement json object
-            JSONObject currMeas = null;
+    private MarkerOptions getMarkerForMeasurement(JSONObject objMeasurement) {
+        try {
+            // Getting measurement data
+            double x_coord = Double.parseDouble(objMeasurement.getString("x_coordinate"));
+            double y_coord = Double.parseDouble(objMeasurement.getString("y_coordinate"));
 
-            try {
-                currMeas = arrMeasurements.getJSONObject(i);
+            // Build the marker title
+            String markerTitle = "Measurement Details";
 
-                // Getting measurement data
-                double x_coord = Double.parseDouble(currMeas.getString("x_coordinate"));
-                double y_coord = Double.parseDouble(currMeas.getString("y_coordinate"));
+            // Set snippet according to rain strength
+            String snippet = "";
 
-                if ((!IsNotif) && (this.CheckDist(mUserLoc, x_coord, y_coord)))
-                    IsNotif = true;
+            // Holds the marker icon to place on the map
+            BitmapDescriptor markerIcon = null;
 
-                // Build the marker title
-                String markerTitle = "Measurement Details";
-
-                // Set snippet according to rain strength
-                String snippet = "";
-
-                // Holds the marker icon to place on the map
-                BitmapDescriptor markerIcon = null;
-
-                String dateTime = currMeas.getString("datetime");
-                if(dateTime != "null") {
+            String dateTime = objMeasurement.getString("datetime");
+            if(dateTime != "null") {
 //                    markerTitle = markerTitle + "Date: " + dateTime + '\n';
-                }
-
-                String rainPower = currMeas.getString("rain_power");
-                if(rainPower != "null") {
-
-                    // Set marker icon according to the rain power
-                    if( rainPower == "1" ) {
-//                        markerTitle = markerTitle + "Rain Strength: Low" + "\n";
-                        snippet = "Rain Strength: Low";
-                        markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.weak_rain);
-                    }
-                    else if( rainPower == "2" ) {
-//                        markerTitle = markerTitle + "Rain Strength: High" + "\n";
-                        snippet = "Rain Strength: High";
-                        markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.strong_rain);
-                    }
-                }
-
-                // If the icon is still initial, give it sunny value
-                if(markerIcon == null)
-                {
-                    markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.sunny);
-                }
-
-                String temperature = currMeas.getString("temperature");
-                if(temperature != "null") {
-
-                    // Convert to numeric value
-                    int numericTemperature = (int)Double.parseDouble(temperature);
-//                    markerTitle = markerTitle + "Temperature: " + numericTemperature + "\n";
-                }
-
-                String humidity = currMeas.getString("humidity");
-                if(humidity != "null") {
-//                    markerTitle = markerTitle + "Humidity: " + humidity + "\n";
-                }
-
-                String sea_level = currMeas.getString("sea_level");
-                if(sea_level != "null") {
-//                    markerTitle = markerTitle + "Sea Level: " + sea_level + "\n";
-                }
-
-                String air_pollution = currMeas.getString("air_pollution");
-                if(air_pollution != "null") {
-//                    markerTitle = markerTitle + "Air Pollution: " + air_pollution + "\n";
-                }
-
-                // Create coordinate object
-                LatLng collegeMgmtCoords = new LatLng(y_coord, x_coord);
-
-                // Add a marker in the coordinates
-                locationMarker = mMap.addMarker(new MarkerOptions().position(collegeMgmtCoords).title(markerTitle)
-                        .icon(markerIcon).snippet(snippet));
-
-//                // Move the Camera to the location of the marker
-//                mMap.moveCamera(CameraUpdateFactory.newLatLng(collegeMgmtCoords));
-//
-//                // Zoom in the Camera
-//                mMap.moveCamera(CameraUpdateFactory.zoomTo(16));
-//
-//                // Show the information window
-//                locationMarker.showInfoWindow();
-
-            } catch (JSONException e) {
-                e.printStackTrace();
             }
+
+            String rainPower = objMeasurement.getString("rain_power");
+            if(rainPower != "null") {
+
+                // Set marker icon according to the rain power
+                if( rainPower == "1" ) {
+//                        markerTitle = markerTitle + "Rain Strength: Low" + "\n";
+                    snippet = "Rain Strength: Low";
+                    markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.weak_rain);
+                }
+                else if( rainPower == "2" ) {
+//                        markerTitle = markerTitle + "Rain Strength: High" + "\n";
+                    snippet = "Rain Strength: High";
+                    markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.strong_rain);
+                }
+            }
+
+            // If the icon is still initial, give it sunny value
+            if(markerIcon == null)
+            {
+                markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.sunny);
+            }
+
+            String temperature = objMeasurement.getString("temperature");
+            if(temperature != "null") {
+
+                // Convert to numeric value
+                int numericTemperature = (int)Double.parseDouble(temperature);
+//                    markerTitle = markerTitle + "Temperature: " + numericTemperature + "\n";
+            }
+
+            String humidity = objMeasurement.getString("humidity");
+            if(humidity != "null") {
+//                    markerTitle = markerTitle + "Humidity: " + humidity + "\n";
+            }
+
+            String sea_level = objMeasurement.getString("sea_level");
+            if(sea_level != "null") {
+//                    markerTitle = markerTitle + "Sea Level: " + sea_level + "\n";
+            }
+
+            String air_pollution = objMeasurement.getString("air_pollution");
+            if(air_pollution != "null") {
+//                    markerTitle = markerTitle + "Air Pollution: " + air_pollution + "\n";
+            }
+
+            // Create coordinate object
+            LatLng collegeMgmtCoords = new LatLng(y_coord, x_coord);
+
+            // Add a marker in the coordinates
+            return (new MarkerOptions().position(collegeMgmtCoords).title(markerTitle)
+                    .icon(markerIcon).snippet(snippet));
+
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
 
-        if (IsNotif) {
-            // Notification code - start
-            NotificationCompat.Builder mBuilder =
-                    new NotificationCompat.Builder(this)
-                            .setSmallIcon(R.drawable.rain)
-                            .setContentTitle("Rain around you")
-                            .setContentText("muhahahahahahaha");
-
-            NotificationManager mNotificationManager =
-                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-            mNotificationManager.notify(1, mBuilder.build());
-        }
+        return null;
     }
 
     public boolean CheckDist(Location currLoc, double XDest, double YDest) {
