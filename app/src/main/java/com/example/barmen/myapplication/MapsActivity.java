@@ -223,8 +223,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                     NotificationCompat.Builder mBuilder =
                                             new NotificationCompat.Builder(this)
                                                     .setSmallIcon(R.drawable.rain)
-                                                    .setContentTitle("Rain around you")
-                                                    .setContentText("muhahahahahahaha");
+                                                    .setContentTitle("It's raining around you")
+                                                    .setContentText("Don't forget WeBrella!");
 
                                     NotificationManager mNotificationManager =
                                             (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
