@@ -303,7 +303,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.strong_rain);
                 } else {
                     markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.sunny);
-
                 }
             } else {
                // markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.sunny);
