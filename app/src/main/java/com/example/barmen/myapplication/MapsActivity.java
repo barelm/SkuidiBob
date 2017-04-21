@@ -1,11 +1,13 @@
 package com.example.barmen.myapplication;
 
 import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
@@ -13,6 +15,7 @@ import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -48,6 +51,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleApiClient mGoogleApiClient;
     private HashMap<Integer, Measurement> visibleMarkers = new HashMap<Integer, Measurement>();
     private View infoWindow;
+
+    Handler h = new Handler();
+    Runnable runnable;
 
     //private JSONArray arrMeasurements = null;
     //private int tmpPrevRainStrength = 0;
@@ -94,11 +100,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     protected void onStart() {
         this.mGoogleApiClient.connect();
+
+        // TODO: לשים כאן את הקוד ור לשלוף את הנתונים כל X שניות
+        h.postDelayed(new Runnable() {
+            public void run() {
+                //do something
+
+                runnable = this;
+
+                h.postDelayed(runnable, 15000);
+            }
+        }, 15000);
+
         super.onStart();
     }
 
     protected void onStop() {
         this.mGoogleApiClient.disconnect();
+        h.removeCallbacks(runnable); //stop handler when activity not visible
+
         super.onStop();
     }
 
@@ -521,6 +541,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 //            PendingIntent sender = PendingIntent.getBroadcast(context, 0, intent, 0);
 //            AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 //            alarmManager.cancel(sender);
+//        }
+//    }
+
+//    public class AlarmReceiver extends BroadcastReceiver {
+//
+//        @Override
+//        public void onReceive(Context context, Intent intent) {
+//            int a = 10;
+//
+//            a = 20;
+//            //Toast.makeText(context, "ALARM", Toast.LENGTH_LONG).show();
 //        }
 //    }
 }
