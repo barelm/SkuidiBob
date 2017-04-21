@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">WeBrella</string>
     <string name="title_activity_maps">WeBrella</string>
+    <string name="temperature"><u><b>Temperature:</b></u></string>
+    <string name="humidity"><u><b>Humidity:</b></u></string>
+    <string name="seaLevel"><u><b>Sea Level:</b></u></string>
 </resources>

@@ -14,6 +14,7 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -482,13 +483,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public View getInfoContents(Marker marker) {
+
         Measurement selMeas = visibleMarkers.get(Integer.decode(marker.getSnippet()));
         String rain = "";
 
         if (selMeas.RainPower == 1) {
-            rain = "Rain Strength: Low";
+            rain = "Weak Rain";
         } else if (selMeas.RainPower == 2) {
-            rain = "Rain Strength: High";
+            rain = "Strong Rain";
         } else {
             rain = "No Rain Detected";
         }
@@ -499,6 +501,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         ((TextView)this.infoWindow.findViewById(R.id.txtTemp)).setText(temp);
         ((TextView)this.infoWindow.findViewById(R.id.txtHumidity)).setText(humidity);
         ((TextView)this.infoWindow.findViewById(R.id.txtSeaLevel)).setText(Double.toString(selMeas.SeaLevel));
+
+        // TODO: להגדיר שהתמונה תקבע לפי סוג המכשיר שמדד - יטופל לאחר סידור של אורון / עידן
+
+        ((ImageView)this.infoWindow.findViewById(R.id.badge)).setImageResource(R.drawable.ic_new_umbrella);
 
         return this.infoWindow;
     }
