@@ -6,28 +6,21 @@
     android:orientation="horizontal">
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="@color/colorGray">
-
-            <ImageView
-                android:id="@+id/badge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="5dp"
-                android:adjustViewBounds="true"></ImageView>
+            android:gravity="center"
+            android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/txtRain"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="2dp"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textColor="#4993d7"
@@ -35,6 +28,11 @@
                 android:textStyle="bold" />
 
         </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"/>
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -96,37 +94,29 @@
 
         </LinearLayout>
 
-        <!--<TextView-->
-            <!--android:id="@+id/lblHumidity"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:layout_alignParentStart="true"-->
-            <!--android:layout_below="@+id/lblTemp"-->
-            <!--android:text="Humidity" />-->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="3dp"
+            android:background="@android:color/darker_gray"/>
 
-        <!--<TextView-->
-            <!--android:id="@+id/txtHumidity"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:layout_alignStart="@+id/txtTemp"-->
-            <!--android:layout_below="@+id/txtTemp"-->
-            <!--android:text="TextView" />-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
 
-        <!--<TextView-->
-            <!--android:id="@+id/lblSeaLevel"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:layout_alignParentStart="true"-->
-            <!--android:layout_below="@+id/lblHumidity"-->
-            <!--android:text="Sea Level" />-->
+            <ImageView
+                android:id="@+id/badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginRight="5dp"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="1dp"
+                android:adjustViewBounds="true"></ImageView>
 
-        <!--<TextView-->
-            <!--android:id="@+id/txtSeaLevel"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:layout_alignStart="@+id/txtTemp"-->
-            <!--android:layout_below="@+id/txtHumidity"-->
-            <!--android:text="TextView" />-->
+        </LinearLayout>
 
     </LinearLayout>
 

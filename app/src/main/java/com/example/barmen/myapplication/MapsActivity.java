@@ -430,7 +430,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ArrayList<Measurement> MeasurementJsonToArray(JSONArray measJson){
         ArrayList<Measurement> measList = new ArrayList<>();
 
-        int measId = 0, measRainPower = 0;
+        int measId = 0, measRainPower = 0, sourceType = 0;
         double measTemperature = 0, measHumidity = 0, xCoord = 0, yCoord = 0, seaLevel = 0, airPollution = 0;
 
         for(int i = 0; i < measJson.length(); i++)
@@ -441,6 +441,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 currMeas = measJson.getJSONObject(i);
 
                 measId = currMeas.getInt("id");
+                sourceType = currMeas.getInt("source_type");
                 yCoord = currMeas.getDouble("y_coordinate");
                 xCoord = currMeas.getDouble("x_coordinate");
 
@@ -464,7 +465,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 continue;
             }
 
-            measList.add(new Measurement(measId, xCoord, yCoord, measRainPower, measTemperature,
+            measList.add(new Measurement(measId, sourceType, xCoord, yCoord, measRainPower, measTemperature,
                                          measHumidity, seaLevel, airPollution, null));
         }
 
@@ -495,16 +496,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             rain = "No Rain Detected";
         }
 
+        if (selMeas.SourceType == 1) {
+            ((ImageView)this.infoWindow.findViewById(R.id.badge)).setImageResource(R.drawable.ic_new_umbrella);
+        } else if (selMeas.SourceType == 2) {
+            ((ImageView)this.infoWindow.findViewById(R.id.badge)).setImageResource(R.drawable.ic_vehicle);
+        }
+
         String temp = Double.toString(selMeas.Temperature) + "°";
         String humidity = Double.toString(selMeas.Humidity) + "%";
         ((TextView)this.infoWindow.findViewById(R.id.txtRain)).setText(rain);
         ((TextView)this.infoWindow.findViewById(R.id.txtTemp)).setText(temp);
         ((TextView)this.infoWindow.findViewById(R.id.txtHumidity)).setText(humidity);
         ((TextView)this.infoWindow.findViewById(R.id.txtSeaLevel)).setText(Double.toString(selMeas.SeaLevel));
-
-        // TODO: להגדיר שהתמונה תקבע לפי סוג המכשיר שמדד - יטופל לאחר סידור של אורון / עידן
-
-        ((ImageView)this.infoWindow.findViewById(R.id.badge)).setImageResource(R.drawable.ic_new_umbrella);
 
         return this.infoWindow;
     }

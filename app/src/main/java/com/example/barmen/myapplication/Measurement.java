@@ -9,6 +9,7 @@ import com.google.android.gms.maps.model.Marker;
 class Measurement {
 
     public int Id;
+    public int SourceType;
     public double XCoord;
     public double YCoord;
     public int RainPower;
@@ -18,10 +19,11 @@ class Measurement {
     public double AirPollution;
     public Marker Marker;
 
-    Measurement(int id, double xCoord, double yCoord, int rainPower, double temperature, double humidity,
+    Measurement(int id, int sourceType, double xCoord, double yCoord, int rainPower, double temperature, double humidity,
                 double airPollution, double seaLevel, Marker marker) {
 
         this.Id = id;
+        this.SourceType = sourceType;
         this.XCoord = xCoord;
         this.YCoord = yCoord;
         this.RainPower = rainPower;
