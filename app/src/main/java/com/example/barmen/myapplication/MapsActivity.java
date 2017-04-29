@@ -466,7 +466,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
 
             measList.add(new Measurement(measId, sourceType, xCoord, yCoord, measRainPower, measTemperature,
-                                         measHumidity, seaLevel, airPollution, null));
+                                         measHumidity, airPollution, seaLevel, null));
         }
 
         return measList;
@@ -504,10 +504,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         String temp = Double.toString(selMeas.Temperature) + "°";
         String humidity = Double.toString(selMeas.Humidity) + "%";
+        String seaLevel = Double.toString(selMeas.SeaLevel);
         ((TextView)this.infoWindow.findViewById(R.id.txtRain)).setText(rain);
         ((TextView)this.infoWindow.findViewById(R.id.txtTemp)).setText(temp);
         ((TextView)this.infoWindow.findViewById(R.id.txtHumidity)).setText(humidity);
-        ((TextView)this.infoWindow.findViewById(R.id.txtSeaLevel)).setText(Double.toString(selMeas.SeaLevel));
+        ((TextView)this.infoWindow.findViewById(R.id.txtSeaLevel)).setText(seaLevel);
 
         return this.infoWindow;
     }
