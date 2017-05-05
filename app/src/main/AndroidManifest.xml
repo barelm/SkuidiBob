@@ -7,10 +7,9 @@
          Google Maps Android API v2, but you must specify either coarse or fine
          location permissions for the 'MyLocation' functionality. 
     -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"  />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"  />
-    <uses-permission android:name="android.permission.BLUETOOTH"  />
-
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
 
     <application
         android:allowBackup="true"
@@ -41,9 +40,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ReportPopup"
+            android:theme="@style/ReportPopupStyle"
+            android:label="@string/report" />
 
-        <activity android:name=".ReportPopup" android:theme="@style/ReportPopupStyle"></activity>
-        <service android:name=".MyService" android:exported="false"/>
+        <service
+            android:name=".MyService"
+            android:exported="false" />
+
+        <activity android:name=".SettingsPopup"
+                  android:theme="@style/ReportPopupStyle"
+                  android:label="@string/settings" />
     </application>
 
 </manifest>

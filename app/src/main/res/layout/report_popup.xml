@@ -1,15 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="match_parent">
 
-    <CheckBox
-        android:id="@+id/cb_raise_notif"
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:layout_width="0dp"
+        android:layout_weight="1"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginStart="62dp"
-        android:layout_marginTop="48dp"
-        android:onClick="onNotifClicked"
-        android:text="Push-Notification" />
-</RelativeLayout>
+        android:layout_marginTop="5dp"
+        android:gravity="center_vertical"
+        android:layout_gravity="center_vertical">
+
+        <ImageButton
+            android:id="@+id/btnSunny"
+            android:background="@android:color/transparent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="onReportSunny"
+            android:src="@mipmap/sunny" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/btnSunny"
+            android:layout_centerInParent="true"
+            android:clickable="false"
+            android:text="Sunny" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:gravity="center_vertical"
+        android:layout_gravity="center_vertical">
+
+        <ImageButton
+            android:id="@+id/btnWeakRain"
+            android:background="@android:color/transparent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="onReportWeakRain"
+            android:src="@mipmap/weak_rain" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/btnWeakRain"
+            android:layout_centerInParent="true"
+            android:clickable="false"
+            android:text="Weak Rain" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:gravity="center_vertical"
+        android:layout_gravity="center_vertical">
+
+        <ImageButton
+            android:id="@+id/btnStrongRain"
+            android:background="@android:color/transparent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="onReportStrongRain"
+            android:src="@mipmap/strong_rain" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/btnStrongRain"
+            android:layout_centerInParent="true"
+            android:clickable="false"
+            android:text="Strong Rain" />
+
+    </RelativeLayout>
+
+
+    <!--<ImageButton-->
+        <!--android:id="@+id/btnWeakRain"-->
+        <!--android:background="@android:color/transparent"-->
+        <!--android:layout_width="0dp"-->
+        <!--android:layout_weight="1"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_marginTop="5dp"-->
+        <!--android:onClick="onReportWeakRain"-->
+        <!--android:src="@mipmap/weak_rain" />-->
+
+    <!--<ImageButton-->
+        <!--android:id="@+id/btnStrongRain"-->
+        <!--android:background="@android:color/transparent"-->
+        <!--android:layout_width="0dp"-->
+        <!--android:layout_weight="1"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_marginTop="5dp"-->
+        <!--android:onClick="onReportStrongRain"-->
+        <!--android:src="@mipmap/strong_rain" />-->
+
+</LinearLayout>

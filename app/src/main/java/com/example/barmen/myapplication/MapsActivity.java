@@ -38,12 +38,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -57,7 +51,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     // Global variables
     private GoogleMap mMap;
     private Location mUserLoc;
-    private GoogleApiClient mGoogleApiClient;
+    public static GoogleApiClient mGoogleApiClient;
     private HashMap<Integer, Measurement> visibleMarkers = new HashMap<Integer, Measurement>();
     private View infoWindow;
 
@@ -68,10 +62,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     Handler h = new Handler();
     Runnable runnable;
-
-    //private JSONArray arrMeasurements = null;
-    //private int tmpPrevRainStrength = 0;
-    //private HashMap<Integer, JSONObject> mesData = new HashMap<Integer, JSONObject>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,6 +106,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         startActivity(new Intent(MapsActivity.this, ReportPopup.class));
     }
 
+    public void onOpenSettingsPopup(View view) {
+        startActivity(new Intent(MapsActivity.this, SettingsPopup.class));
+    }
+
     protected void onStart() {
         this.mGoogleApiClient.connect();
 
@@ -146,6 +140,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         this.mMap.setInfoWindowAdapter(this);
 
         this.mMap.setOnCameraMoveListener(this);
+
+        this.mMap.getUiSettings().setMapToolbarEnabled(false);
     }
 
     @Override
@@ -182,7 +178,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 h.postDelayed(runnable, 10000);
             }
         }, 10000);
-
     }
 
     @Override
@@ -237,98 +232,46 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
 
-//        for (int key : visibleMarkers.keySet()) {
-//           //visibleMarkers.get(key).remove();
-//        }
-//
-//        visibleMarkers.clear();
-
         //This is the current user-viewable region of the map
         LatLngBounds bounds = this.mMap.getProjection().getVisibleRegion().latLngBounds;
-
-        // Conver measurment json to class.
-        //arrMeas = MeasurementJsonToArray(arrMeasurements);
 
         //Loop through all the items that are available to be placed on the map
         for(Measurement currMeas : this.Measurements)
         {
-            //JSONObject currMeas = null;
-            //try {
-            //currMeas = arrMeasurements.getJSONObject(i);
-
-            // Get the measurement id
-            //int measID = Integer.parseInt(currMeas.getString("id"));
-
-            // Taking only the last measurement
-            //if( i == (arrMeasurements.length() - 1) || currMeas.Id == 428 || currMeas.Id == 429)
-            //{
-               // int rainPower = currMeas.getInt("rain_power");
-
-                // If we received different rain strength, remove previous markers
-               // if( rainPower != tmpPrevRainStrength && measID != 428 && measID != 429)
-               // {
-               //     mMap.clear();
-               //     visibleMarkers.clear();
-               //     tmpPrevRainStrength = rainPower;
-               // }
-
-                // Getting measurement data
-                //double x_coord = Double.parseDouble(currMeas.getString("x_coordinate"));
-                //double y_coord = Double.parseDouble(currMeas.getString("y_coordinate"));
-
-                //If the item is within the the bounds of the screen
-                if(bounds.contains(new LatLng(currMeas.YCoord, currMeas.XCoord)))
-                {
-                    //If the item isn't already being displayed
-                    if(this.visibleMarkers.containsKey(currMeas.Id)) {
-                        visibleMarkersNew.put(currMeas.Id, this.visibleMarkers.get(currMeas.Id));
-                        this.visibleMarkers.remove(currMeas.Id);
-                    }
-                    else {
-                        //Add the Marker to the Map and keep track of it with the HashMap
-                        //getMarkerForItem just returns a MarkerOptions object
-                        currMeas.Marker = this.mMap.addMarker(getMarkerForMeasurement(currMeas));
-                        //this.visibleMarkers.put(measID, this.mMap.addMarker(getMarkerForMeasurement(currMeas)));
-                        visibleMarkersNew.put(currMeas.Id, currMeas);
-
-                        // Create mesaurment data hash table TODO: לבדוק האם זה הדרך הנכונה
-                    }
+            //If the item is within the the bounds of the screen
+            if(bounds.contains(new LatLng(currMeas.YCoord, currMeas.XCoord)))
+            {
+                //If the item isn't already being displayed
+                if(this.visibleMarkers.containsKey(currMeas.Id)) {
+                    visibleMarkersNew.put(currMeas.Id, this.visibleMarkers.get(currMeas.Id));
+                    this.visibleMarkers.remove(currMeas.Id);
                 }
+                else {
 
-                // Only if we need to show notification
-                if ((showNotif) && (!dispNotif) && (this.CheckDist(mUserLoc, currMeas.XCoord, currMeas.YCoord)))
-                {
-                    NotificationCompat.Builder mBuilder =
-                            new NotificationCompat.Builder(this)
-                                    .setSmallIcon(R.drawable.rain)
-                                    .setContentTitle("It's raining around you")
-                                    .setContentText("Don't forget WeBrella!");
-
-                    NotificationManager mNotificationManager =
-                            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-                    mNotificationManager.notify(1, mBuilder.build());
-
-                    dispNotif = true;
+                    //Add the Marker to the Map and keep track of it with the HashMap
+                    //getMarkerForItem just returns a MarkerOptions object
+                    currMeas.Marker = this.mMap.addMarker(getMarkerForMeasurement(currMeas));
+                    //this.visibleMarkers.put(measID, this.mMap.addMarker(getMarkerForMeasurement(currMeas)));
+                    visibleMarkersNew.put(currMeas.Id, currMeas);
                 }
+            }
 
-//                //If the marker is off screen
-//                else
-//                {
-//                    //If the course was previously on screen
-//                    if(visibleMarkers.containsKey(currMeas.Id))
-//                    {
-//                        //1. Remove the Marker from the GoogleMap
-//                        visibleMarkers.get(currMeas.Id).Marker.remove();
-//
-//                        //2. Remove the reference to the Marker from the HashMap
-//                        visibleMarkers.remove(currMeas.Id);
-//                    }
-//                }
-            //}
-            //} catch (JSONException e) {
-            //    e.printStackTrace();
-           // }
+            // Only if we need to show notification
+            if ((showNotif) && (!dispNotif) && (this.CheckDist(mUserLoc, currMeas.XCoord, currMeas.YCoord)))
+            {
+                NotificationCompat.Builder mBuilder =
+                        new NotificationCompat.Builder(this)
+                                .setSmallIcon(R.drawable.rain)
+                                .setContentTitle("It's raining around you")
+                                .setContentText("Don't forget WeBrella!");
+
+                NotificationManager mNotificationManager =
+                        (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+                mNotificationManager.notify(1, mBuilder.build());
+
+                dispNotif = true;
+            }
         }
 
         // Delete all unrelvent marker from screen.
@@ -338,62 +281,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // Save new measurment data.
         this.visibleMarkers = visibleMarkersNew;
-
-        // Execute the thread again because we want realtime data
-        //new ReadServerData().execute(urlString);
     }
 
-// TODO:  מה זה?
-//    public void setRepeatingServerReadTask() {
-//
-//        final Handler handler = new Handler();
-//        Timer timer = new Timer();
-//
-//        // timer task
-//        TimerTask task = new TimerTask() {
-//            @Override
-//            public void run() {
-//                handler.post(new Runnable() {
-//                    public void run() {
-//                        try {
-//                            // Execute async task to read measurements data from the server
-//                            new ReadServerData().execute(urlString);
-//                        } catch (Exception e) {
-//                            // error, do something
-//                        }
-//                    }
-//                });
-//            }
-//        };
-//
-//        timer.schedule(task, 0, 5000);  // run every minute
-//    }
-
     private MarkerOptions getMarkerForMeasurement(Measurement meas) {
-        // Getting measurement data
-        //double x_coord = Double.parseDouble(objMeasurement.getString("x_coordinate"));
-        //double y_coord = Double.parseDouble(objMeasurement.getString("y_coordinate"));
-
-        // Build the marker title
-        //String markerTitle = "Measurement Details";
-
-        // Set snippet according to rain strength
-        //String snippet = "";
 
         // Holds the marker icon to place on the map
         BitmapDescriptor markerIcon = null;
 
-        //String dateTime = objMeasurement.getString("datetime");
-        //if(dateTime != "null") {
-//             markerTitle = markerTitle + "Date: " + dateTime + '\n';
-        //}
-
-        //String MeasId = objMeasurement.getString("id");
-
-        //if (!objMeasurement.isNull("rain_power")) {
-            //int rainPower = objMeasurement.getInt("rain_power");
-
-            // Set marker icon according to the rain power
+        // Set marker icon according to the rain power
         if (meas.RainPower == 1) {
             markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.weak_rain);
         } else if (meas.RainPower == 2) {
@@ -402,32 +297,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.sunny);
         }
 
-//                // If the icon is still initial, give it sunny value
-//                if (markerIcon == null) {
-//                    markerIcon = BitmapDescriptorFactory.fromResource(R.mipmap.sunny);
-//                }
-        //String temperature = objMeasurement.getString("temperature");
-        //if(meas.Temperature != "null") {
-
-            // Convert to numeric value
-        //int numericTemperature = (int)(meas.Temperature);
-//                    markerTitle = markerTitle + "Temperature: " + numericTemperature + "\n";
-        //}
-
-        //String humidity = objMeasurement.getString("humidity");
-        //if(humidity != "null") {
-//                    markerTitle = markerTitle + "Humidity: " + humidity + "\n";
-        //}
-
-        //String sea_level = objMeasurement.getString("sea_level");
-        //if(sea_level != "null") {
-//                    markerTitle = markerTitle + "Sea Level: " + sea_level + "\n";
-        //}
-
-        //String air_pollution = objMeasurement.getString("air_pollution");
-        //if(air_pollution != "null") {
-//                    markerTitle = markerTitle + "Air Pollution: " + air_pollution + "\n";
-        //}
         // TODO: לבדוק שבאמת לא צריך פה כלום
         // Create coordinate object
         LatLng collegeMgmtCoords = new LatLng(meas.YCoord, meas.XCoord);
@@ -435,7 +304,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // Add a marker in the coordinates
         return (new MarkerOptions().position(collegeMgmtCoords).icon(markerIcon)
                 .snippet(Integer.toString(meas.Id)));
-        //.title(markerTitle)
     }
 
     private boolean CheckDist(Location currLoc, double XDest, double YDest) {
@@ -539,18 +407,4 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         return this.infoWindow;
     }
-
-    // TODO: מתושה שאמורה להקפיץ התרעה
-//    private void RaiseNotif() {
-//        NotificationCompat.Builder mBuilder =
-//                new NotificationCompat.Builder(this)
-//                        .setSmallIcon(R.drawable.rain)
-//                        .setContentTitle("It's raining around you")
-//                        .setContentText("Don't forget WeBrella!");
-//
-//        NotificationManager mNotificationManager =
-//                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-//        mNotificationManager.notify(1, mBuilder.build());
-//    }
 }

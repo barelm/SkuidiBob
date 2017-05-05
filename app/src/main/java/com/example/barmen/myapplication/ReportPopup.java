@@ -1,12 +1,13 @@
 package com.example.barmen.myapplication;
 
 import android.app.Activity;
-import android.content.SharedPreferences;
+import android.content.Intent;
+import android.location.Location;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.util.DisplayMetrics;
 import android.view.View;
-import android.widget.CheckBox;
+
+import com.google.android.gms.location.LocationServices;
 
 /**
  * Created by Barmen on 03/04/2017.
@@ -20,32 +21,34 @@ public class ReportPopup extends Activity {
 
         setContentView(R.layout.report_popup);
 
-        SharedPreferences load = getSharedPreferences("setting", 0);
-        ((CheckBox)this.findViewById(R.id.cb_raise_notif)).setChecked(load.getBoolean("raise_notif", false));
-
         DisplayMetrics dm = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(dm);
 
-        getWindow().setLayout((int)(dm.widthPixels * 0.8), (int)(dm.heightPixels * 0.6));
+        getWindow().setLayout((int)(dm.widthPixels * 0.8), (int)(dm.heightPixels * 0.3));
     }
 
-    public void onNotifClicked(View view) {
-        SharedPreferences save = getSharedPreferences("setting", 0);
+    public void onReportSunny(View view) {
 
+        // Get the current user location
+        Location userLoc = LocationServices.FusedLocationApi.getLastLocation(
+                MapsActivity.mGoogleApiClient);
+    }
 
+    public void onReportWeakRain(View view) {
 
-        // Check which checkbox was clicked
-        switch(view.getId()) {
-            case R.id.cb_raise_notif:
-                if (((CheckBox) view).isChecked()) {
-                    save.edit().putBoolean("raise_notif", true).commit();
-                }else {
-                    save.edit().putBoolean("raise_notif", false).commit();
-                }
-        }
+        // Get the current user location
+        Location userLoc = LocationServices.FusedLocationApi.getLastLocation(
+                MapsActivity.mGoogleApiClient);
 
     }
 
+    public void onReportStrongRain(View view) {
+
+        // Get the current user location
+        Location userLoc = LocationServices.FusedLocationApi.getLastLocation(
+                MapsActivity.mGoogleApiClient);
+
+    }
 }
 
 

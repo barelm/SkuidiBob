@@ -5,4 +5,6 @@
     <string name="humidity"><u><b>Humidity:</b></u></string>
     <string name="seaLevel"><u><b>Sea Level:</b></u></string>
     <string name="measuredWith"><u><b>Measured With:</b></u></string>
+    <string name="settings">Settings</string>
+    <string name="report">Report Weather</string>
 </resources>
