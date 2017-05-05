@@ -57,7 +57,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     // Global variables
     private GoogleMap mMap;
     private Location mUserLoc;
-    private GoogleApiClient mGoogleApiClient;
+    public static GoogleApiClient mGoogleApiClient;
     private HashMap<Integer, Measurement> visibleMarkers = new HashMap<Integer, Measurement>();
     private View infoWindow;
 
@@ -114,6 +114,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void onOpenReportPopup(View view) {
         startActivity(new Intent(MapsActivity.this, ReportPopup.class));
+    }
+
+    public void onOpenSettingsPopup(View view) {
+        startActivity(new Intent(MapsActivity.this, SettingsPopup.class));
     }
 
     protected void onStart() {
