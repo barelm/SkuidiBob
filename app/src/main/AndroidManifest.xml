@@ -43,6 +43,7 @@
         </activity>
 
         <activity android:name=".ReportPopup" android:theme="@style/ReportPopupStyle"></activity>
+        <service android:name=".MyService" android:exported="false"/>
     </application>
 
 </manifest>

@@ -4,8 +4,10 @@ import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -36,11 +38,17 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, GoogleMap.InfoWindowAdapter {
+        GoogleApiClient.OnConnectionFailedListener, GoogleMap.InfoWindowAdapter, GoogleMap.OnCameraMoveListener {
 
     // Constant
     private static final String urlString = "http://193.106.55.45:5000/measurements";
@@ -52,6 +60,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleApiClient mGoogleApiClient;
     private HashMap<Integer, Measurement> visibleMarkers = new HashMap<Integer, Measurement>();
     private View infoWindow;
+
+    private ArrayList<Measurement> Measurements = new ArrayList<>();
+
+    public String newurl;
+
 
     Handler h = new Handler();
     Runnable runnable;
@@ -82,9 +95,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     .build();
         }
 
+//        SharedPreferences save = getSharedPreferences("setting", 0);
+//        save.edit().remove("raise_notif");
+
         this.infoWindow = getLayoutInflater().inflate(R.layout.info_window, null);
-        //Alarm alarm = new Alarm();
-        //alarm.setAlarm(this);
+
+        // TODO: לבטל את הסרוויס שמתריע ברקע
+        stopService(new Intent(this, MyService.class));
     }
 
     @Override
@@ -102,17 +119,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onStart() {
         this.mGoogleApiClient.connect();
 
-        // TODO: לשים כאן את הקוד ור לשלוף את הנתונים כל X שניות
-        h.postDelayed(new Runnable() {
-            public void run() {
-                //do something
-
-                runnable = this;
-
-                h.postDelayed(runnable, 15000);
-            }
-        }, 15000);
-
         super.onStart();
     }
 
@@ -120,7 +126,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         this.mGoogleApiClient.disconnect();
         h.removeCallbacks(runnable); //stop handler when activity not visible
 
+        // Check if user want push notification.
+//        if (getSharedPreferences("setting", 0).getBoolean("raise_notif", false)){
+//             // TODO: להפעיל את הסרוויס שמתריע ברגע + לממש אותו כמו שצריך עם קריאה מהשרת
+//            Intent serviceIntent = new Intent(this,MyService.class);
+//            serviceIntent.putExtra("Loc", mUserLoc);
+//            startService(serviceIntent);
+//        }
+
         super.onStop();
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+
+        // Save the map object
+        this.mMap = googleMap;
+
+        this.mMap.setInfoWindowAdapter(this);
+
+        this.mMap.setOnCameraMoveListener(this);
     }
 
     @Override
@@ -142,9 +167,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     this.mUserLoc.getLongitude())));
 
             this.mMap.setMyLocationEnabled(true);
-
-            new ReadServerData().execute(this.urlString);
         }
+
+        new ReadServerData().execute(this.urlString);
+
+        // TODO: לשים כאן את הקוד ור לשלוף את הנתונים כל X שניות
+        h.postDelayed(new Runnable() {
+            public void run() {
+                //do something
+                new ReadServerData().execute(urlString);
+
+                runnable = this;
+
+                h.postDelayed(runnable, 10000);
+            }
+        }, 10000);
+
+    }
+
+    @Override
+    public void onCameraMove() {
+        addHideMarkers(false);
     }
 
     private class ReadServerData extends AsyncTask<String, Void, String> {
@@ -167,39 +210,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     // Get the full HTTP Data as JSONObject
                     JSONObject reader= new JSONObject(stream);
 
-                    // Get jsonArrray of the measurements
-                    //arrMeasurements = reader.getJSONArray("Measurements");
-
                     // Add/Hide the markers on the map
-                    addHideMarkers(true, reader.getJSONArray("Measurements"));
+                    handleSevrverData(reader.getJSONArray("Measurements"));
 
                 }catch(JSONException e){
                     e.printStackTrace();
                 }
-
-            } // if statement end
-        } // onPostExecute() end
-    } // ProcessJSON class end
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-
-        // Save the map object
-        this.mMap = googleMap;
-
-        this.mMap.setInfoWindowAdapter(this);
+            }
+        }
     }
 
-    private void addHideMarkers(boolean showNotif, JSONArray arrMeasurements)
+    private void handleSevrverData(JSONArray arrMeasurements){
+        // Conver measurment json to class.
+        this.Measurements = MeasurementJsonToArray(arrMeasurements);
+        addHideMarkers(false);
+    }
+
+    private void addHideMarkers(boolean showNotif)
     {
         boolean dispNotif = false;
         ArrayList<Measurement> arrMeas;
@@ -220,10 +247,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLngBounds bounds = this.mMap.getProjection().getVisibleRegion().latLngBounds;
 
         // Conver measurment json to class.
-        arrMeas = MeasurementJsonToArray(arrMeasurements);
+        //arrMeas = MeasurementJsonToArray(arrMeasurements);
 
         //Loop through all the items that are available to be placed on the map
-        for(Measurement currMeas : arrMeas)
+        for(Measurement currMeas : this.Measurements)
         {
             //JSONObject currMeas = null;
             //try {
@@ -313,7 +340,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         this.visibleMarkers = visibleMarkersNew;
 
         // Execute the thread again because we want realtime data
-        new ReadServerData().execute(urlString);
+        //new ReadServerData().execute(urlString);
     }
 
 // TODO:  מה זה?
@@ -517,50 +544,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 //        NotificationCompat.Builder mBuilder =
 //                new NotificationCompat.Builder(this)
 //                        .setSmallIcon(R.drawable.rain)
-//                        .setContentTitle("Rain around you")
-//                        .setContentText("muhahahahahahaha");
+//                        .setContentTitle("It's raining around you")
+//                        .setContentText("Don't forget WeBrella!");
 //
 //        NotificationManager mNotificationManager =
 //                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
 //        mNotificationManager.notify(1, mBuilder.build());
-//    }
-
-    // TODO: לטפל בשעון שקופת כל כמה שניות
-
-//    private class Alarm extends BroadcastReceiver
-//    {
-//        @Override
-//        public void onReceive(Context context, Intent intent)
-//        {
-//            RaiseNotif();
-//        }
-//
-//        public void setAlarm(Context context)
-//        {
-//            AlarmManager am =( AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-//            Intent i = new Intent(context, Alarm.class);
-//            PendingIntent pi = PendingIntent.getBroadcast(context, 0, i, 0);
-//            am.setRepeating(AlarmManager.RTC, System.currentTimeMillis(), 1000 * 5, pi); // Millisec * Second * Minute
-//        }
-//
-//        public void cancelAlarm(Context context)
-//        {
-//            Intent intent = new Intent(context, Alarm.class);
-//            PendingIntent sender = PendingIntent.getBroadcast(context, 0, intent, 0);
-//            AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-//            alarmManager.cancel(sender);
-//        }
-//    }
-
-//    public class AlarmReceiver extends BroadcastReceiver {
-//
-//        @Override
-//        public void onReceive(Context context, Intent intent) {
-//            int a = 10;
-//
-//            a = 20;
-//            //Toast.makeText(context, "ALARM", Toast.LENGTH_LONG).show();
-//        }
 //    }
 }
