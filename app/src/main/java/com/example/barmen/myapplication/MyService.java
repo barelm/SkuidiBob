@@ -1,9 +1,11 @@
 package com.example.barmen.myapplication;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -13,6 +15,9 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -20,11 +25,17 @@ import org.json.JSONObject;
  * Created by Barmen on 21/04/2017.
  */
 
-public class MyService extends Service {
+public class MyService extends Service implements GoogleApiClient.ConnectionCallbacks {
+
+    private static final int mDistanceNotif = 1;
+    private static final int mDbSecondUpdate = 10;
 
     Handler h = new Handler();
     Runnable runnable;
     Location mUserLoc;
+
+    private GoogleApiClient mGoogleApiClient;
+    private int lastRainMode = 0;
 
     @Nullable
     @Override
@@ -35,24 +46,41 @@ public class MyService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        Bundle extras = intent.getExtras();
-
-        if (extras != null) {
-            mUserLoc = (Location)extras.get("Loc");
+        if (this.mGoogleApiClient == null) {
+            this.mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addApi(LocationServices.API)
+                    .build();
         }
 
-        CheckRainPower();
+        if (this.mGoogleApiClient.isConnected() == false) {
+            this.mGoogleApiClient.connect();
+        }
 
-//        h.postDelayed(new Runnable() {
-//            public void run() {
-//                //do something
-//                CheckRainPower();
+//        if ( intent != null) {
+//            Bundle extras = intent.getExtras();
 //
-//                runnable = this;
-//
-//                h.postDelayed(runnable, 10000);
+//            if (extras != null) {
+//                mUserLoc = (Location)extras.get("Loc");
 //            }
-//        }, 10000);
+//        }
+
+//        if (mUserLoc != null) {
+//            CheckRainPower();
+//        }
+
+        h.postDelayed(new Runnable() {
+            public void run() {
+                //do something
+                if (mUserLoc != null) {
+                    CheckRainPower(mUserLoc);
+                }
+
+                runnable = this;
+
+                h.postDelayed(runnable, mDbSecondUpdate * 1000);
+            }
+        }, mDbSecondUpdate * 1000);
 
         //we have some options for service
         //start sticky means service will be explicity started and stopped
@@ -61,21 +89,38 @@ public class MyService extends Service {
 
     @Override
     public void onDestroy() {
+        // Stop reading from db.
         h.removeCallbacks(runnable);
+
+        if (this.mGoogleApiClient.isConnected() == true){
+            this.mGoogleApiClient.disconnect();
+        }
+
         super.onDestroy();
-        //stopping the player when service is destroyed
     }
 
-    public void CheckRainPower(){
+    public void CheckRainPower(Location userLoc){
         Uri.Builder builder = new Uri.Builder();
         builder.scheme("http")
                 .encodedAuthority("193.106.55.45:5000")
                 .appendPath("isRaining")
-                .appendQueryParameter("lat",  Double.toString(mUserLoc.getLatitude()))
-                .appendQueryParameter("long", Double.toString(mUserLoc.getLongitude()));
+                .appendQueryParameter("lat",  Double.toString(userLoc.getLatitude()))
+                .appendQueryParameter("long", Double.toString(userLoc.getLongitude()))
+                .appendQueryParameter("radius", Integer.toString(mDistanceNotif));
 
         String Url = builder.build().toString();
         new ReadServerData().execute(Url);
+    }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        this.mUserLoc = LocationServices.FusedLocationApi.getLastLocation(
+                this.mGoogleApiClient);
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
     }
 
     private class ReadServerData extends AsyncTask<String, Void, String> {
@@ -98,18 +143,50 @@ public class MyService extends Service {
                 // Get rain power.
                 int rainPower = Integer.parseInt(stream);
 
-                if (rainPower > -3) {
+                if (rainPower > 0) {
                     RaiseNotif(rainPower);
                 }
             }
         }
     }
 
+    public void DecideIfNotif(int rainPower){
+
+        // If sunny or dont have any measurement - do not send notification.
+        if (rainPower == -1 || rainPower == 0){
+            lastRainMode = 0;
+            return;
+        }
+
+        // If rain power dont change - not send notification.
+        if (rainPower == lastRainMode){
+            return;
+        }
+
+        RaiseNotif(rainPower);
+    }
+
     public void RaiseNotif(int rainPower) {
+        int color = 0;
+        String contentTitile = "";
+
+        if (rainPower == 2){
+            color = Color.BLUE;
+            contentTitile = "It's raining heavily around you";
+        }else if (rainPower == 1){
+            color = Color.GREEN;
+            contentTitile = "It's raining lightly around you";
+        }
+
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(R.drawable.rain)
-                        .setContentTitle("It's raining around you")
+                        .setSound(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.rain))
+                        //.setVibrate(new long[]{ 0, 100, 200, 300 })
+                        .setColor(color)
+                        .setLights(color, 300, 300)
+                        .setDefaults(Notification.DEFAULT_VIBRATE)
+                        .setContentTitle(contentTitile)
                         .setContentText("Don't forget WeBrella!");
 
         NotificationManager mNotificationManager =
