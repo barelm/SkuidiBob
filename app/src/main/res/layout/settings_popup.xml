@@ -2,14 +2,34 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="match_parent">
 
-    <CheckBox
-        android:id="@+id/cb_raise_notif"
+    <SeekBar
+        android:id="@+id/seekBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
+        android:max="19"
+        android:progress="0"
+        android:layout_marginTop="16dp"
+        android:layout_below="@+id/switch_rain_notif"
+        android:layout_alignEnd="@+id/switch_rain_notif"
+        android:layout_alignStart="@+id/switch_rain_notif" />
+
+    <TextView
+        android:id="@+id/seekBarText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TextView"
+        android:layout_below="@+id/seekBar"
+        android:layout_alignEnd="@+id/seekBar"
+        android:layout_marginEnd="43dp" />
+
+    <Switch
+        android:id="@+id/switch_rain_notif"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Push-Notification"
+        android:layout_marginStart="63dp"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="62dp"
-        android:layout_marginTop="48dp"
-        android:onClick="onNotifClicked"
-        android:text="Push-Notification" />
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="13dp" />
+
 </RelativeLayout>

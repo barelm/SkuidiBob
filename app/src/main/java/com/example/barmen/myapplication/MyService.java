@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
@@ -14,6 +15,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
+import android.widget.SeekBar;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -27,12 +29,13 @@ import org.json.JSONObject;
 
 public class MyService extends Service implements GoogleApiClient.ConnectionCallbacks {
 
-    private static final int mDistanceNotif = 1;
     private static final int mDbSecondUpdate = 10;
 
     Handler h = new Handler();
     Runnable runnable;
     Location mUserLoc;
+
+    private double mDistanceNotif = 0;
 
     private GoogleApiClient mGoogleApiClient;
     private int lastRainMode = 0;
@@ -100,13 +103,19 @@ public class MyService extends Service implements GoogleApiClient.ConnectionCall
     }
 
     public void CheckRainPower(Location userLoc){
+
+        if (mDistanceNotif == 0) {
+            SharedPreferences load = getSharedPreferences("setting", 0);
+            mDistanceNotif = ( load.getInt("distance_notif", 4) + 1 ) / 5;
+        }
+
         Uri.Builder builder = new Uri.Builder();
         builder.scheme("http")
                 .encodedAuthority("193.106.55.45:5000")
                 .appendPath("isRaining")
                 .appendQueryParameter("lat",  Double.toString(userLoc.getLatitude()))
                 .appendQueryParameter("long", Double.toString(userLoc.getLongitude()))
-                .appendQueryParameter("radius", Integer.toString(mDistanceNotif));
+                .appendQueryParameter("radius", Double.toString(mDistanceNotif));
 
         String Url = builder.build().toString();
         new ReadServerData().execute(Url);

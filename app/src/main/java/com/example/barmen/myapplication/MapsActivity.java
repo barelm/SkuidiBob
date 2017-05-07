@@ -65,7 +65,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public String newurl;
 
-
     Handler h = new Handler();
     Runnable runnable;
 
