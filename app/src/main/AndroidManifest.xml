@@ -32,26 +32,30 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".MapsActivity"
-            android:label="@string/title_activity_maps">
+            android:name=".LandingPageActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".MapsActivity"
+            android:label="@string/title_activity_maps">
+        </activity>
         <activity
             android:name=".ReportPopup"
-            android:theme="@style/ReportPopupStyle"
-            android:label="@string/report" />
+            android:label="@string/report"
+            android:theme="@style/ReportPopupStyle" />
 
         <service
             android:name=".MyService"
             android:exported="false" />
 
-        <activity android:name=".SettingsPopup"
-                  android:theme="@style/ReportPopupStyle"
-                  android:label="@string/settings" />
+        <activity
+            android:name=".SettingsPopup"
+            android:label="@string/settings"
+            android:theme="@style/ReportPopupStyle" />
     </application>
 
 </manifest>
