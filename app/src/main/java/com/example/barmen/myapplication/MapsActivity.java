@@ -36,8 +36,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Date;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, GoogleMap.InfoWindowAdapter, GoogleMap.OnCameraMoveListener {
@@ -339,6 +342,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         int measId = 0, measRainPower = 0, sourceType = 0;
         double measTemperature = 0, measHumidity = 0, xCoord = 0, yCoord = 0, seaLevel = 0, airPollution = 0;
+        String measDateTime, measDate, formattedMeasDate = "",  measTime;
+        int indexOfT;
 
         for(int i = 0; i < measJson.length(); i++)
         {
@@ -351,6 +356,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 sourceType = currMeas.getInt("source_type");
                 yCoord = currMeas.getDouble("y_coordinate");
                 xCoord = currMeas.getDouble("x_coordinate");
+
+                // Get date time string
+                measDateTime = currMeas.getString("datetime");
+
+                // Get index of letter T in order to seperate to date and time
+                indexOfT = measDateTime.indexOf("T");
+
+                // Get measurement date ( 'YYYY-MM-DD' format )
+                measDate = measDateTime.substring(0, indexOfT);
+
+                // Convert the date to 'DD-MM-YYYY' format
+                try {
+                    Date date = new SimpleDateFormat("yyyy-MM-dd").parse(measDate);
+                    formattedMeasDate = new SimpleDateFormat("dd-MM-yyyy").format(date);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+
+                indexOfT++;
+                measTime = measDateTime.substring(indexOfT, indexOfT+8);
 
                 if (!currMeas.isNull("rain_power"))
                     measRainPower = currMeas.getInt("rain_power");
@@ -373,7 +398,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
 
             measList.add(new Measurement(measId, sourceType, xCoord, yCoord, measRainPower, measTemperature,
-                                         measHumidity, airPollution, seaLevel, null));
+                                         measHumidity, airPollution, seaLevel, formattedMeasDate, measTime, null));
         }
 
         return measList;
@@ -418,6 +443,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         ((TextView)this.infoWindow.findViewById(R.id.txtTemp)).setText(temp);
         ((TextView)this.infoWindow.findViewById(R.id.txtHumidity)).setText(humidity);
         ((TextView)this.infoWindow.findViewById(R.id.txtSeaLevel)).setText(seaLevel);
+        ((TextView)this.infoWindow.findViewById(R.id.txtDate)).setText(selMeas.Date);
+        ((TextView)this.infoWindow.findViewById(R.id.txtTime)).setText(selMeas.Time);
 
         return this.infoWindow;
     }

@@ -17,10 +17,12 @@ class Measurement {
     public double Humidity;
     public double SeaLevel;
     public double AirPollution;
+    public String Date;
+    public String Time;
     public Marker Marker;
 
     Measurement(int id, int sourceType, double xCoord, double yCoord, int rainPower, double temperature, double humidity,
-                double airPollution, double seaLevel, Marker marker) {
+                double airPollution, double seaLevel, String Date, String Time, Marker marker) {
 
         this.Id = id;
         this.SourceType = sourceType;
@@ -31,6 +33,8 @@ class Measurement {
         this.Humidity = humidity;
         this.AirPollution = airPollution;
         this.SeaLevel = seaLevel;
+        this.Date = Date;
+        this.Time = Time;
         this.Marker = marker;
     }
 }
