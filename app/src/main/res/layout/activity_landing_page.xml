@@ -8,12 +8,14 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-         android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="@color/grey">
 
         <ImageView
+            android:id="@+id/activity_landing_page_imageview"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:src="@drawable/banner" />
+            android:layout_height="match_parent" />
+            <!--android:src="@drawable/webrella_banner_grey_long_1" />-->
 
     </FrameLayout>
 
