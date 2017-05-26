@@ -9,7 +9,7 @@ import android.widget.ImageView;
 public class LandingPageActivity extends Activity {
 
     // Time to launch the maps activity
-    private static int LANDING_PAGE_TIME_OUT = 3000;
+    private static int LANDING_PAGE_TIME_OUT = 2500;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,15 +39,17 @@ public class LandingPageActivity extends Activity {
                 }
 
                 // Make the pictures changing faster during the time
-                if (iteration_number <= 2) {
-                    interval = 350;
-                }
-                else if (iteration_number <= 5) {
-                    interval = 225;
-                }
-                else {
-                    interval = 100;
-                }
+//                if (iteration_number <= 2) {
+//                    interval = 350;
+//                }
+//                else if (iteration_number <= 5) {
+//                    interval = 225;
+//                }
+//                else {
+//                    interval = 100;
+//                }
+
+                interval = 200;
 
                 // Set timeout for interval between images
                 handler.removeCallbacks(this);
