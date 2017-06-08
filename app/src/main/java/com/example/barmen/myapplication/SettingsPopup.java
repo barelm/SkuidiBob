@@ -70,6 +70,7 @@ public class SettingsPopup extends Activity {
 
     private void setSeekBarText(int progresValue){
         int Value = (progresValue + 1) * 200;
-        ((TextView) findViewById(R.id.seekBarText)).setText(Integer.toString(Value));
+        String Text = Integer.toString(Value) + " M";
+        ((TextView) findViewById(R.id.seekBarText)).setText(Text);
     }
 }
