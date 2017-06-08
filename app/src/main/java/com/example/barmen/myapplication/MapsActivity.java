@@ -46,7 +46,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         GoogleApiClient.OnConnectionFailedListener, GoogleMap.InfoWindowAdapter, GoogleMap.OnCameraMoveListener {
 
     // Constant
-    public static final String urlString = "http://193.106.55.45:5000/measurements?record_num=1";
+    public static final String urlString = "http://193.106.55.45:5000/measurements?records_num=1";
     private static final int mDistanceNotif = 1000;
 
     // Global variables
