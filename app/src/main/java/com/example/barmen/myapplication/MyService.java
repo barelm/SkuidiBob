@@ -153,7 +153,7 @@ public class MyService extends Service implements GoogleApiClient.ConnectionCall
                 int rainPower = Integer.parseInt(stream);
 
                 if (rainPower > 0) {
-                    RaiseNotif(rainPower);
+                    DecideIfNotif(rainPower);
                 }
             }
         }
@@ -171,6 +171,8 @@ public class MyService extends Service implements GoogleApiClient.ConnectionCall
         if (rainPower == lastRainMode){
             return;
         }
+
+        lastRainMode = rainPower;
 
         RaiseNotif(rainPower);
     }

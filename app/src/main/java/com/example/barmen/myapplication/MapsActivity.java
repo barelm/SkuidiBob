@@ -89,7 +89,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // TODO: לבטל את הסרוויס שמתריע ברקע
         stopService(new Intent(this, MyService.class));
-    }
+
+        // Start sercive - for project day
+        Intent serviceIntent = new Intent(this,MyService.class);
+        serviceIntent.putExtra("Loc", mUserLoc);
+        startService(serviceIntent);
+}
 
     @Override
     public void onConnectionSuspended(int i) {
@@ -142,6 +147,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onStop() {
         this.mGoogleApiClient.disconnect();
         h.removeCallbacks(runnable); //stop handler when activity not visible
+
+//        // Check if user want push notification.
+//        if (getSharedPreferences("setting", 0).getBoolean("raise_notif", false)){
+//             // TODO: להפעיל את הסרוויס שמתריע ברגע + לממש אותו כמו שצריך עם קריאה מהשרת
+//            Intent serviceIntent = new Intent(this,MyService.class);
+//            serviceIntent.putExtra("Loc", mUserLoc);
+//            startService(serviceIntent);
+//        }
 
         super.onStop();
     }
